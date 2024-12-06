@@ -9,6 +9,7 @@ interface ColumnData {
 
 const ListDistance: FunctionComponent = () => {
   const distance = useSignal(0);
+  const similarity = useSignal(0);
 
   const createObject = (locations: string) => {
     const col1: Array<number> = [];
@@ -27,7 +28,9 @@ const ListDistance: FunctionComponent = () => {
     return col.sort((a, b) => a - b);
   }
 
-  const getDistanceBetweenLocations = (col1: Array<number>, col2: Array<number>) => {
+  const calculateDistance = (columns: ColumnData) => {
+    const col1 = orderCol(columns.col1);
+    const col2 = orderCol(columns.col2);
     let tempResult: number = 0;
     col1.forEach((location1, index) => {
       tempResult = tempResult + Math.abs(location1 - col2[index]);
@@ -36,14 +39,24 @@ const ListDistance: FunctionComponent = () => {
     distance.value = tempResult;
   };
 
-  const calculateDistance = (columns: ColumnData) => {
-    getDistanceBetweenLocations(orderCol(columns.col1), orderCol(columns.col2))
-  };
+  const calculateSimilarity = (columns: ColumnData) => {
+    let tempResult: number = 0;
+    columns.col1.forEach((location1, index) => {
+      const timesRepeated = columns.col2.filter(value => value === location1).length;
+      tempResult = tempResult + (timesRepeated * location1)
+    });
+
+    similarity.value = tempResult;
+  }
 
   useEffect(() => {
     fetch("/day1.txt")
       .then((response) => response.text())
-      .then((locations) => calculateDistance(createObject(locations)));
+      .then((locations) => {
+        const locationsObject = createObject(locations);
+        calculateDistance(locationsObject);
+        calculateSimilarity(locationsObject);
+      });
   }, []);
 
 
@@ -58,6 +71,9 @@ const ListDistance: FunctionComponent = () => {
             </h2>
             <p class="mt-4 text-gray-700">
               Total distance is <strong>{distance}</strong>
+            </p>
+            <p class="mt-4 text-gray-700">
+              Total similarity is <strong>{similarity}</strong>
             </p>
           </div>
 
